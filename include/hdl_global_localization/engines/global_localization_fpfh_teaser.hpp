@@ -20,7 +20,7 @@ public:
   virtual GlobalLocalizationResults query(pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud, int max_num_candidates) override;
 
 private:
-  using GlobalLocalizationEngineFPFH_RANSAC::private_nh;
+  using GlobalLocalizationEngineFPFH_RANSAC::node_ptr_;
 
   std::unique_ptr<MatchingCostEvaluater> evaluater;
 };

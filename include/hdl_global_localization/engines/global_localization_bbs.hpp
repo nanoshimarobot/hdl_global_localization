@@ -1,7 +1,11 @@
 #ifndef HDL_GLOBAL_LOCALIZATION_BBS_HPP
 #define HDL_GLOBAL_LOCALIZATION_BBS_HPP
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
+#include <optional>
+#include <pcl_conversions/pcl_conversions.h>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+#include <nav_msgs/msg/occupancy_grid.hpp>
 
 #include <hdl_global_localization/engines/global_localization_engine.hpp>
 
@@ -11,7 +15,7 @@ class BBSLocalization;
 
 class GlobalLocalizationBBS : public GlobalLocalizationEngine {
 public:
-  GlobalLocalizationBBS(ros::NodeHandle& private_nh);
+  GlobalLocalizationBBS(rclcpp::Node::SharedPtr node_ptr);
   virtual ~GlobalLocalizationBBS() override;
 
   virtual void set_global_map(pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud) override;
@@ -25,11 +29,11 @@ private:
   pcl::PointCloud<pcl::PointXYZ>::Ptr unslice(const Points2D& points);
 
 protected:
-  ros::NodeHandle& private_nh;
+  rclcpp::Node::SharedPtr node_ptr_;
 
-  ros::Publisher gridmap_pub;
-  ros::Publisher map_slice_pub;
-  ros::Publisher scan_slice_pub;
+  rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr gridmap_pub;
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr map_slice_pub;
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr scan_slice_pub;
 
   std::unique_ptr<BBSLocalization> bbs;
 };

@@ -3,7 +3,10 @@
 
 #include <vector>
 #include <Eigen/Core>
-#include <nav_msgs/OccupancyGrid.h>
+#include <memory>
+#include <rclcpp/clock.hpp>
+#include <rclcpp/time.hpp>
+#include <nav_msgs/msg/occupancy_grid.hpp>
 
 #include <opencv2/opencv.hpp>
 
@@ -16,11 +19,13 @@ public:
   OccupancyGridMap(double resolution, const cv::Mat& values) {
     this->resolution = resolution;
     this->values = values;
+    clock_ = std::make_shared<rclcpp::Clock>(RCL_SYSTEM_TIME);
   }
 
   OccupancyGridMap(double resolution, int width, int height) {
     this->resolution = resolution;
     values = cv::Mat1f(height, width, 0.0f);
+    clock_ = std::make_shared<rclcpp::Clock>(RCL_SYSTEM_TIME);
   }
 
   double grid_resolution() const { return resolution; }
@@ -69,10 +74,10 @@ public:
     return std::make_shared<OccupancyGridMap>(resolution * 2.0, small_map);
   }
 
-  nav_msgs::OccupancyGridConstPtr to_rosmsg() const {
-    nav_msgs::OccupancyGridPtr msg(new nav_msgs::OccupancyGrid);
+  nav_msgs::msg::OccupancyGrid::ConstPtr to_rosmsg() const {
+    nav_msgs::msg::OccupancyGrid::Ptr msg = std::make_shared<nav_msgs::msg::OccupancyGrid>();
     msg->header.frame_id = "map";
-    msg->header.stamp = ros::Time(0);
+    msg->header.stamp = rclcpp::Time(0);
 
     msg->data.resize(values.rows * values.cols);
     std::transform(values.begin(), values.end(), msg->data.begin(), [=](auto x) {
@@ -80,7 +85,7 @@ public:
       return std::max(0.0, std::min(100.0, x_));
     });
 
-    msg->info.map_load_time = ros::Time::now();
+    msg->info.map_load_time = clock_->now();
     msg->info.width = values.cols;
     msg->info.height = values.rows;
     msg->info.resolution = resolution;
@@ -111,6 +116,7 @@ private:
 private:
   double resolution;
   cv::Mat1f values;
+  rclcpp::Clock::SharedPtr clock_;
 };
 
 }  // namespace hdl_global_localization

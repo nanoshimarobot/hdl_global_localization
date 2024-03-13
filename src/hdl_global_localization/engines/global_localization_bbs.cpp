@@ -1,79 +1,81 @@
 #include <hdl_global_localization/engines/global_localization_bbs.hpp>
 
-#include <pcl_ros/point_cloud.h>
-#include <sensor_msgs/PointCloud2.h>
-
 #include <hdl_global_localization/bbs/bbs_localization.hpp>
 #include <hdl_global_localization/bbs/occupancy_gridmap.hpp>
 
 namespace hdl_global_localization {
 
-GlobalLocalizationBBS::GlobalLocalizationBBS(ros::NodeHandle& private_nh) : private_nh(private_nh) {
-  gridmap_pub = private_nh.advertise<nav_msgs::OccupancyGrid>("bbs/gridmap", 1, true);
-  map_slice_pub = private_nh.advertise<sensor_msgs::PointCloud2>("bbs/map_slice", 1, true);
-  scan_slice_pub = private_nh.advertise<sensor_msgs::PointCloud2>("bbs/scan_slice", 1, false);
+GlobalLocalizationBBS::GlobalLocalizationBBS(rclcpp::Node::SharedPtr node_ptr) : node_ptr_(node_ptr) {
+  gridmap_pub = node_ptr_->create_publisher<nav_msgs::msg::OccupancyGrid>("bbs/gridmap", 1);
+  map_slice_pub = node_ptr_->create_publisher<sensor_msgs::msg::PointCloud2>("bbs/map_slice", 1);
+  scan_slice_pub = node_ptr_->create_publisher<sensor_msgs::msg::PointCloud2>("bbs/scan_slice", 1);
 }
 
 GlobalLocalizationBBS ::~GlobalLocalizationBBS() {}
 
 void GlobalLocalizationBBS::set_global_map(pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud) {
   BBSParams params;
-  params.max_range = private_nh.param<double>("bbs/max_range", 15.0);
-  params.min_tx = private_nh.param<double>("bbs/min_tx", -10.0);
-  params.max_tx = private_nh.param<double>("bbs/max_tx", 10.0);
-  params.min_ty = private_nh.param<double>("bbs/min_ty", -10.0);
-  params.max_ty = private_nh.param<double>("bbs/max_ty", 10.0);
-  params.min_theta = private_nh.param<double>("bbs/min_theta", -3.15);
-  params.max_theta = private_nh.param<double>("bbs/max_theta", 3.15);
+  params.max_range = node_ptr_->declare_parameter<double>("bbs/max_range", 15.0);
+  params.min_tx = node_ptr_->declare_parameter<double>("bbs/min_tx", -10.0);
+  params.max_tx = node_ptr_->declare_parameter<double>("bbs/max_tx", 10.0);
+  params.min_ty = node_ptr_->declare_parameter<double>("bbs/min_ty", -10.0);
+  params.max_ty = node_ptr_->declare_parameter<double>("bbs/max_ty", 10.0);
+  params.min_theta = node_ptr_->declare_parameter<double>("bbs/min_theta", -3.15);
+  params.max_theta = node_ptr_->declare_parameter<double>("bbs/max_theta", 3.15);
   bbs.reset(new BBSLocalization(params));
 
-  double map_min_z = private_nh.param<double>("bbs/map_min_z", 2.0);
-  double map_max_z = private_nh.param<double>("bbs/map_max_z", 2.4);
+  double map_min_z = node_ptr_->declare_parameter<double>("bbs/map_min_z", 2.0);
+  double map_max_z = node_ptr_->declare_parameter<double>("bbs/map_max_z", 2.4);
   auto map_2d = slice(*cloud, map_min_z, map_max_z);
-  ROS_INFO_STREAM("Set Map " << map_2d.size() << " points");
+  RCLCPP_INFO_STREAM(node_ptr_->get_logger(), "Set Map " << map_2d.size() << " points");
 
   if (map_2d.size() < 128) {
-    ROS_WARN_STREAM("Num points in the sliced map is too small!!");
-    ROS_WARN_STREAM("Change the slice range parameters!!");
+    RCLCPP_WARN_STREAM(node_ptr_->get_logger(), "Num points in the sliced map is too small!!");
+    RCLCPP_WARN_STREAM(node_ptr_->get_logger(), "Change the slice range parameters!!");
   }
 
-  int map_width = private_nh.param<int>("bbs/map_width", 1024);
-  int map_height = private_nh.param<int>("bbs/map_height", 1024);
-  double map_resolution = private_nh.param<double>("bbs/map_resolution", 0.5);
-  int map_pyramid_level = private_nh.param<int>("bbs/map_pyramid_level", 6);
-  int max_points_per_cell = private_nh.param<int>("bbs/max_points_per_cell", 5);
+  int map_width = node_ptr_->declare_parameter<int>("bbs/map_width", 1024);
+  int map_height = node_ptr_->declare_parameter<int>("bbs/map_height", 1024);
+  double map_resolution = node_ptr_->declare_parameter<double>("bbs/map_resolution", 0.5);
+  int map_pyramid_level = node_ptr_->declare_parameter<int>("bbs/map_pyramid_level", 6);
+  int max_points_per_cell = node_ptr_->declare_parameter<int>("bbs/max_points_per_cell", 5);
   bbs->set_map(map_2d, map_resolution, map_width, map_height, map_pyramid_level, max_points_per_cell);
 
   auto map_3d = unslice(map_2d);
-  map_3d->header.frame_id = "map";
-  map_slice_pub.publish(map_3d);
-  gridmap_pub.publish(bbs->gridmap()->to_rosmsg());
+  sensor_msgs::msg::PointCloud2 map_3d_msg;
+  pcl::toROSMsg(*map_3d, map_3d_msg);
+  map_3d_msg.header.frame_id = "map";
+  map_slice_pub->publish(map_3d_msg);
+  gridmap_pub->publish(*(bbs->gridmap()->to_rosmsg()));
 }
 
 GlobalLocalizationResults GlobalLocalizationBBS::query(pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud, int max_num_candidates) {
-  double scan_min_z = private_nh.param<double>("bbs/scan_min_z", -0.2);
-  double scan_max_z = private_nh.param<double>("bbs/scan_max_z", 0.2);
+  double scan_min_z = node_ptr_->declare_parameter<double>("bbs/scan_min_z", -0.2);
+  double scan_max_z = node_ptr_->declare_parameter<double>("bbs/scan_max_z", 0.2);
   auto scan_2d = slice(*cloud, scan_min_z, scan_max_z);
 
   std::vector<GlobalLocalizationResult::Ptr> results;
 
-  ROS_INFO_STREAM("Query " << scan_2d.size() << " points");
+  RCLCPP_INFO_STREAM(node_ptr_->get_logger(), "Query " << scan_2d.size() << " points");
   if (scan_2d.size() < 32) {
-    ROS_WARN_STREAM("Num points in the sliced scan is too small!!");
-    ROS_WARN_STREAM("Change the slice range parameters!!");
+    RCLCPP_WARN_STREAM(node_ptr_->get_logger(), "Num points in the sliced scan is too small!!");
+    RCLCPP_WARN_STREAM(node_ptr_->get_logger(), "Change the slice range parameters!!");
     return GlobalLocalizationResults(results);
   }
 
   double best_score = 0.0;
   auto trans_2d = bbs->localize(scan_2d, 0.0, &best_score);
-  if (trans_2d == boost::none) {
+  if (!trans_2d) {
     return GlobalLocalizationResults(results);
   }
 
-  if (scan_slice_pub.getNumSubscribers()) {
+  if (scan_slice_pub->get_subscription_count() > 0) {
     auto scan_3d = unslice(scan_2d);
-    scan_3d->header = cloud->header;
-    scan_slice_pub.publish(scan_3d);
+    sensor_msgs::msg::PointCloud2 scan_3d_msg;
+    pcl::toROSMsg(*scan_3d, scan_3d_msg);
+    scan_3d_msg.header.frame_id = cloud->header.frame_id;
+    scan_3d_msg.header.stamp = rclcpp::Time(static_cast<int64_t>(cloud->header.stamp * 1000));
+    scan_slice_pub->publish(scan_3d_msg);
   }
 
   Eigen::Isometry3f trans_3d = Eigen::Isometry3f::Identity();

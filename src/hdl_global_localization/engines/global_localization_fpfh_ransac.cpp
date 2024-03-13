@@ -1,6 +1,6 @@
 #include <hdl_global_localization/engines/global_localization_fpfh_ransac.hpp>
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 #include <pcl/features/fpfh_omp.h>
 #include <pcl/features/normal_3d_omp.h>
 #include <pcl/search/impl/kdtree.hpp>
@@ -9,22 +9,22 @@
 
 namespace hdl_global_localization {
 
-GlobalLocalizationEngineFPFH_RANSAC::GlobalLocalizationEngineFPFH_RANSAC(ros::NodeHandle& private_nh) : private_nh(private_nh) {}
+GlobalLocalizationEngineFPFH_RANSAC::GlobalLocalizationEngineFPFH_RANSAC(rclcpp::Node::SharedPtr node_ptr) : node_ptr_(node_ptr) {}
 
 GlobalLocalizationEngineFPFH_RANSAC::~GlobalLocalizationEngineFPFH_RANSAC() {}
 
 pcl::PointCloud<pcl::FPFHSignature33>::ConstPtr GlobalLocalizationEngineFPFH_RANSAC::extract_fpfh(pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud) {
-  double normal_estimation_radius = private_nh.param<double>("fpfh/normal_estimation_radius", 2.0);
-  double search_radius = private_nh.param<double>("fpfh/search_radius", 8.0);
+  double normal_estimation_radius = node_ptr_->declare_parameter<double>("fpfh/normal_estimation_radius", 2.0);
+  double search_radius = node_ptr_->declare_parameter<double>("fpfh/search_radius", 8.0);
 
-  ROS_INFO_STREAM("Normal Estimation: Radius(" << normal_estimation_radius << ")");
+  RCLCPP_INFO_STREAM(node_ptr_->get_logger(), "Normal Estimation: Radius(" << normal_estimation_radius << ")");
   pcl::PointCloud<pcl::Normal>::Ptr normals(new pcl::PointCloud<pcl::Normal>);
   pcl::NormalEstimationOMP<pcl::PointXYZ, pcl::Normal> nest;
   nest.setRadiusSearch(normal_estimation_radius);
   nest.setInputCloud(cloud);
   nest.compute(*normals);
 
-  ROS_INFO_STREAM("FPFH Extraction: Search Radius(" << search_radius << ")");
+  RCLCPP_INFO_STREAM(node_ptr_->get_logger(), "FPFH Extraction: Search Radius(" << search_radius << ")");
   pcl::PointCloud<pcl::FPFHSignature33>::Ptr features(new pcl::PointCloud<pcl::FPFHSignature33>);
   pcl::FPFHEstimationOMP<pcl::PointXYZ, pcl::Normal, pcl::FPFHSignature33> fest;
   fest.setRadiusSearch(search_radius);
@@ -39,7 +39,7 @@ void GlobalLocalizationEngineFPFH_RANSAC::set_global_map(pcl::PointCloud<pcl::Po
   global_map = cloud;
   global_map_features = extract_fpfh(cloud);
 
-  ransac.reset(new RansacPoseEstimation<pcl::FPFHSignature33>(private_nh));
+  ransac.reset(new RansacPoseEstimation<pcl::FPFHSignature33>(node_ptr_));
   ransac->set_target(global_map, global_map_features);
 }
 

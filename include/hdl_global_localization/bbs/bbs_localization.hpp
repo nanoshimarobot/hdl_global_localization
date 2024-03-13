@@ -9,7 +9,7 @@
 #include <memory>
 #include <queue>
 #include <vector>
-#include <boost/optional.hpp>
+#include <optional>
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
@@ -73,7 +73,7 @@ public:
 
   void set_map(const Points& map_points, double resolution, int width, int height, int pyramid_levels, int max_points_per_cell);
 
-  boost::optional<Eigen::Isometry2f> localize(const Points& scan_points, double min_score, double* best_score = nullptr);
+  std::optional<Eigen::Isometry2f> localize(const Points& scan_points, double min_score, double* best_score = nullptr);
 
   std::shared_ptr<const OccupancyGridMap> gridmap() const;
 

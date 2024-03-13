@@ -1,6 +1,6 @@
 #include <hdl_global_localization/engines/global_localization_fpfh_teaser.hpp>
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 #include <teaser/matcher.h>
 #include <teaser/registration.h>
 
@@ -9,7 +9,7 @@
 
 namespace hdl_global_localization {
 
-GlobalLocalizationEngineFPFH_Teaser::GlobalLocalizationEngineFPFH_Teaser(ros::NodeHandle& private_nh) : GlobalLocalizationEngineFPFH_RANSAC(private_nh) {}
+GlobalLocalizationEngineFPFH_Teaser::GlobalLocalizationEngineFPFH_Teaser(rclcpp::Node::SharedPtr node_ptr) : GlobalLocalizationEngineFPFH_RANSAC(node_ptr) {}
 
 GlobalLocalizationEngineFPFH_Teaser::~GlobalLocalizationEngineFPFH_Teaser() {}
 

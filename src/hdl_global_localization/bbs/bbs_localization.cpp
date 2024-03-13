@@ -5,7 +5,7 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 
 namespace hdl_global_localization {
 
@@ -86,18 +86,18 @@ void BBSLocalization::set_map(const BBSLocalization::Points& map_points, double 
   }
 }
 
-boost::optional<Eigen::Isometry2f> BBSLocalization::localize(const BBSLocalization::Points& scan_points, double min_score, double* best_score) {
+std::optional<Eigen::Isometry2f> BBSLocalization::localize(const BBSLocalization::Points& scan_points, double min_score, double* best_score) {
   theta_resolution = std::acos(1 - std::pow(gridmap_pyramid[0]->grid_resolution(), 2) / (2 * std::pow(params.max_range, 2)));
 
   double best_score_storage;
   best_score = best_score ? best_score : &best_score_storage;
 
   *best_score = min_score;
-  boost::optional<DiscreteTransformation> best_trans;
+  std::optional<DiscreteTransformation> best_trans;
 
   auto trans_queue = create_init_transset(scan_points);
 
-  ROS_INFO_STREAM("Branch-and-Bound");
+  std::cout << "Branch-and-Bound" << std::endl;
   while (!trans_queue.empty()) {
     // std::cout << trans_queue.size() << std::endl;
 
@@ -120,8 +120,8 @@ boost::optional<Eigen::Isometry2f> BBSLocalization::localize(const BBSLocalizati
     }
   }
 
-  if (best_trans == boost::none) {
-    return boost::none;
+  if (!best_trans) {
+    return std::nullopt;
   }
 
   return best_trans->transformation(theta_resolution, gridmap_pyramid);
@@ -137,10 +137,10 @@ std::priority_queue<DiscreteTransformation> BBSLocalization::create_init_transse
   std::pair<int, int> ty_range(std::floor(params.min_ty / trans_res), std::ceil(params.max_ty / trans_res));
   std::pair<int, int> theta_range(std::floor(params.min_theta / theta_resolution), std::ceil(params.max_theta / theta_resolution));
 
-  ROS_INFO_STREAM("Resolution trans:" << trans_res << " theta:" << theta_resolution);
-  ROS_INFO_STREAM("TransX range:" << tx_range.first << " " << tx_range.second);
-  ROS_INFO_STREAM("TransY range:" << ty_range.first << " " << ty_range.second);
-  ROS_INFO_STREAM("Theta  range:" << theta_range.first << " " << theta_range.second);
+  /* ROS_INFO_STREAM */ std::cout << "Resolution trans:" << trans_res << " theta:" << theta_resolution << std::endl;
+  /* ROS_INFO_STREAM */ std::cout << "TransX range:" << tx_range.first << " " << tx_range.second << std::endl;
+  /* ROS_INFO_STREAM */ std::cout << "TransY range:" << ty_range.first << " " << ty_range.second << std::endl;
+  /* ROS_INFO_STREAM */ std::cout << "Theta  range:" << theta_range.first << " " << theta_range.second << std::endl;
 
   std::vector<DiscreteTransformation> transset;
   transset.reserve((tx_range.second - tx_range.first) * (ty_range.second - ty_range.first) * (theta_range.second - theta_range.first));
@@ -153,7 +153,7 @@ std::priority_queue<DiscreteTransformation> BBSLocalization::create_init_transse
     }
   }
 
-  ROS_INFO_STREAM("Initial transformation set size:" << transset.size());
+  /* ROS_INFO_STREAM */ std::cout << "Initial transformation set size:" << transset.size() << std::endl;
 
 #pragma omp parallel for
   for (int i = 0; i < transset.size(); i++) {
