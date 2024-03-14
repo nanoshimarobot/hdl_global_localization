@@ -6,6 +6,26 @@
 namespace hdl_global_localization {
 
 GlobalLocalizationBBS::GlobalLocalizationBBS(rclcpp::Node* node_ptr) : node_ptr_(node_ptr) {
+  node_ptr_->declare_parameter<double>("bbs.max_range", 15.0);
+  node_ptr_->declare_parameter<double>("bbs.min_tx", -10.0);
+  node_ptr_->declare_parameter<double>("bbs.max_tx", 10.0);
+  node_ptr_->declare_parameter<double>("bbs.min_ty", -10.0);
+  node_ptr_->declare_parameter<double>("bbs.max_ty", 10.0);
+  node_ptr_->declare_parameter<double>("bbs.min_theta", -3.15);
+  node_ptr_->declare_parameter<double>("bbs.max_theta", 3.15);
+
+  node_ptr_->declare_parameter<double>("bbs.map_min_z", 2.0);
+  node_ptr_->declare_parameter<double>("bbs.map_max_z", 2.4);
+
+  node_ptr_->declare_parameter<int>("bbs.map_width", 1024);
+  node_ptr_->declare_parameter<int>("bbs.map_height", 1024);
+  node_ptr_->declare_parameter<double>("bbs.map_resolution", 0.5);
+  node_ptr_->declare_parameter<int>("bbs.map_pyramid_level", 6);
+  node_ptr_->declare_parameter<int>("bbs.max_points_per_cell", 5);
+
+  node_ptr_->declare_parameter<double>("bbs.scan_min_z", -0.2);
+  node_ptr_->declare_parameter<double>("bbs.scan_max_z", 0.2);
+
   gridmap_pub = node_ptr_->create_publisher<nav_msgs::msg::OccupancyGrid>("bbs.gridmap", 1);
   map_slice_pub = node_ptr_->create_publisher<sensor_msgs::msg::PointCloud2>("bbs.map_slice", 1);
   scan_slice_pub = node_ptr_->create_publisher<sensor_msgs::msg::PointCloud2>("bbs.scan_slice", 1);
@@ -15,17 +35,17 @@ GlobalLocalizationBBS ::~GlobalLocalizationBBS() {}
 
 void GlobalLocalizationBBS::set_global_map(pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud) {
   BBSParams params;
-  params.max_range = node_ptr_->declare_parameter<double>("bbs.max_range", 15.0);
-  params.min_tx = node_ptr_->declare_parameter<double>("bbs.min_tx", -10.0);
-  params.max_tx = node_ptr_->declare_parameter<double>("bbs.max_tx", 10.0);
-  params.min_ty = node_ptr_->declare_parameter<double>("bbs.min_ty", -10.0);
-  params.max_ty = node_ptr_->declare_parameter<double>("bbs.max_ty", 10.0);
-  params.min_theta = node_ptr_->declare_parameter<double>("bbs.min_theta", -3.15);
-  params.max_theta = node_ptr_->declare_parameter<double>("bbs.max_theta", 3.15);
+  params.max_range = node_ptr_->get_parameter("bbs.max_range").as_double();
+  params.min_tx = node_ptr_->get_parameter("bbs.min_tx").as_double();
+  params.max_tx = node_ptr_->get_parameter("bbs.max_tx").as_double();
+  params.min_ty = node_ptr_->get_parameter("bbs.min_ty").as_double();
+  params.max_ty = node_ptr_->get_parameter("bbs.max_ty").as_double();
+  params.min_theta = node_ptr_->get_parameter("bbs.min_theta").as_double();
+  params.max_theta = node_ptr_->get_parameter("bbs.max_theta").as_double();
   bbs.reset(new BBSLocalization(params));
 
-  double map_min_z = node_ptr_->declare_parameter<double>("bbs.map_min_z", 2.0);
-  double map_max_z = node_ptr_->declare_parameter<double>("bbs.map_max_z", 2.4);
+  double map_min_z = node_ptr_->get_parameter("bbs.map_min_z").as_double();
+  double map_max_z = node_ptr_->get_parameter("bbs.map_max_z").as_double();
   auto map_2d = slice(*cloud, map_min_z, map_max_z);
   RCLCPP_INFO_STREAM(node_ptr_->get_logger(), "Set Map " << map_2d.size() << " points");
 
@@ -34,11 +54,11 @@ void GlobalLocalizationBBS::set_global_map(pcl::PointCloud<pcl::PointXYZ>::Const
     RCLCPP_WARN_STREAM(node_ptr_->get_logger(), "Change the slice range parameters!!");
   }
 
-  int map_width = node_ptr_->declare_parameter<int>("bbs.map_width", 1024);
-  int map_height = node_ptr_->declare_parameter<int>("bbs.map_height", 1024);
-  double map_resolution = node_ptr_->declare_parameter<double>("bbs.map_resolution", 0.5);
-  int map_pyramid_level = node_ptr_->declare_parameter<int>("bbs.map_pyramid_level", 6);
-  int max_points_per_cell = node_ptr_->declare_parameter<int>("bbs.max_points_per_cell", 5);
+  int map_width = node_ptr_->get_parameter("bbs.map_width").as_int();
+  int map_height = node_ptr_->get_parameter("bbs.map_height").as_int();
+  double map_resolution = node_ptr_->get_parameter("bbs.map_resolution").as_double();
+  int map_pyramid_level = node_ptr_->get_parameter("bbs.map_pyramid_level").as_int();
+  int max_points_per_cell = node_ptr_->get_parameter("bbs.max_points_per_cell").as_int();
   bbs->set_map(map_2d, map_resolution, map_width, map_height, map_pyramid_level, max_points_per_cell);
 
   auto map_3d = unslice(map_2d);
@@ -50,8 +70,8 @@ void GlobalLocalizationBBS::set_global_map(pcl::PointCloud<pcl::PointXYZ>::Const
 }
 
 GlobalLocalizationResults GlobalLocalizationBBS::query(pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud, int max_num_candidates) {
-  double scan_min_z = node_ptr_->declare_parameter<double>("bbs.scan_min_z", -0.2);
-  double scan_max_z = node_ptr_->declare_parameter<double>("bbs.scan_max_z", 0.2);
+  double scan_min_z = node_ptr_->get_parameter("bbs.scan_min_z").as_double();
+  double scan_max_z = node_ptr_->get_parameter("bbs.scan_max_z").as_double();
   auto scan_2d = slice(*cloud, scan_min_z, scan_max_z);
 
   std::vector<GlobalLocalizationResult::Ptr> results;

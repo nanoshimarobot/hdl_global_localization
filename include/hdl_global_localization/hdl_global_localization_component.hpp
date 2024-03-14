@@ -36,6 +36,8 @@ public:
   GlobalLocalizationNode(const std::string& name_space = "", const rclcpp::NodeOptions& options = rclcpp::NodeOptions())
   : Node("hdl_global_localization_node", name_space, options) {
     set_engine(this->declare_parameter<std::string>("global_localization_engine", "FPFH_RANSAC"));
+    this->declare_parameter<double>("globalmap_downsample_resolution", 0.5);
+    this->declare_parameter<double>("query_downsample_resolution", 0.5);
 
     set_engine_service_ = this->create_service<srv::SetGlobalLocalizationEngine>(
       "set_engine",
@@ -88,7 +90,7 @@ public:
 
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
     pcl::fromROSMsg(req->global_map, *cloud);
-    cloud = downsample(cloud, this->declare_parameter<double>("globalmap_downsample_resolution", 0.5));
+    cloud = downsample(cloud, this->get_parameter("globalmap_downsample_resolution").as_double());
 
     globalmap_header = req->global_map.header;
     global_map = cloud;
@@ -106,7 +108,7 @@ public:
 
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
     pcl::fromROSMsg(req->cloud, *cloud);
-    cloud = downsample(cloud, this->declare_parameter<double>("query_downsample_resolution", 0.5));
+    cloud = downsample(cloud, this->get_parameter("query_downsample_resolution").as_double());
 
     auto results = engine->query(cloud, req->max_num_candidates);
 
