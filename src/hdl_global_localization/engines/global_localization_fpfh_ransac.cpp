@@ -9,13 +9,13 @@
 
 namespace hdl_global_localization {
 
-GlobalLocalizationEngineFPFH_RANSAC::GlobalLocalizationEngineFPFH_RANSAC(rclcpp::Node::SharedPtr node_ptr) : node_ptr_(node_ptr) {}
+GlobalLocalizationEngineFPFH_RANSAC::GlobalLocalizationEngineFPFH_RANSAC(rclcpp::Node* node_ptr) : node_ptr_(node_ptr) {}
 
 GlobalLocalizationEngineFPFH_RANSAC::~GlobalLocalizationEngineFPFH_RANSAC() {}
 
 pcl::PointCloud<pcl::FPFHSignature33>::ConstPtr GlobalLocalizationEngineFPFH_RANSAC::extract_fpfh(pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud) {
-  double normal_estimation_radius = node_ptr_->declare_parameter<double>("fpfh/normal_estimation_radius", 2.0);
-  double search_radius = node_ptr_->declare_parameter<double>("fpfh/search_radius", 8.0);
+  double normal_estimation_radius = node_ptr_->declare_parameter<double>("fpfh.normal_estimation_radius", 2.0);
+  double search_radius = node_ptr_->declare_parameter<double>("fpfh.search_radius", 8.0);
 
   RCLCPP_INFO_STREAM(node_ptr_->get_logger(), "Normal Estimation: Radius(" << normal_estimation_radius << ")");
   pcl::PointCloud<pcl::Normal>::Ptr normals(new pcl::PointCloud<pcl::Normal>);

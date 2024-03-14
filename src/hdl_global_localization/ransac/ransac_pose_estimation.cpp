@@ -58,7 +58,7 @@
 namespace hdl_global_localization {
 
 template <typename FeatureT>
-RansacPoseEstimation<FeatureT>::RansacPoseEstimation(rclcpp::Node::SharedPtr node_ptr) : node_ptr_(node_ptr) {}
+RansacPoseEstimation<FeatureT>::RansacPoseEstimation(rclcpp::Node* node_ptr) : node_ptr_(node_ptr) {}
 
 template <typename FeatureT>
 void RansacPoseEstimation<FeatureT>::set_target(pcl::PointCloud<pcl::PointXYZ>::ConstPtr target, typename pcl::PointCloud<FeatureT>::ConstPtr target_features) {
@@ -67,12 +67,12 @@ void RansacPoseEstimation<FeatureT>::set_target(pcl::PointCloud<pcl::PointXYZ>::
   feature_tree.reset(new pcl::KdTreeFLANN<FeatureT>);
   feature_tree->setInputCloud(target_features);
 
-  if (node_ptr_->declare_parameter<bool>("ransac/voxel_based", true)) {
+  if (node_ptr_->declare_parameter<bool>("ransac.voxel_based", true)) {
     evaluater.reset(new MatchingCostEvaluaterVoxels());
   } else {
     evaluater.reset(new MatchingCostEvaluaterFlann());
   }
-  evaluater->set_target(target, node_ptr_->declare_parameter<double>("ransac/max_correspondence_distance", 1.0));
+  evaluater->set_target(target, node_ptr_->declare_parameter<double>("ransac.max_correspondence_distance", 1.0));
 }
 
 template <typename FeatureT>
@@ -89,14 +89,14 @@ GlobalLocalizationResults RansacPoseEstimation<FeatureT>::estimate() {
   correspondence_rejection.setInputTarget(target);
   correspondence_rejection.setInputSource(source);
   correspondence_rejection.setCardinality(3);
-  correspondence_rejection.setSimilarityThreshold(node_ptr_->declare_parameter<double>("ransac/similarity_threshold", 0.5));
+  correspondence_rejection.setSimilarityThreshold(node_ptr_->declare_parameter<double>("ransac.similarity_threshold", 0.5));
 
   RCLCPP_INFO_STREAM(node_ptr_->get_logger(), "RANSAC : Precompute Nearest Features");
   std::vector<std::vector<int>> similar_features(source->size());
 #pragma omp parallel for
   for (int i = 0; i < source->size(); i++) {
     std::vector<float> sq_dists;
-    feature_tree->nearestKSearch(source_features->at(i), node_ptr_->declare_parameter<int>("ransac/correspondence_randomness", 2), similar_features[i], sq_dists);
+    feature_tree->nearestKSearch(source_features->at(i), node_ptr_->declare_parameter<int>("ransac.correspondence_randomness", 2), similar_features[i], sq_dists);
   }
 
   std::vector<std::mt19937> mts(omp_get_max_threads());
@@ -107,9 +107,9 @@ GlobalLocalizationResults RansacPoseEstimation<FeatureT>::estimate() {
   RCLCPP_INFO_STREAM(node_ptr_->get_logger(), "RANSAC : Main Loop");
   std::atomic_int matching_count(0);
   std::atomic_int iterations(0);
-  std::vector<GlobalLocalizationResult::Ptr> results(node_ptr_->declare_parameter<int>("ransac/max_iterations", 100000));
-  int matching_budget = node_ptr_->declare_parameter<int>("ransac/matching_budget", 10000);
-  double min_inlier_fraction = node_ptr_->declare_parameter<double>("ransac/inlier_fraction", 0.25);
+  std::vector<GlobalLocalizationResult::Ptr> results(node_ptr_->declare_parameter<int>("ransac.max_iterations", 100000));
+  int matching_budget = node_ptr_->declare_parameter<int>("ransac.matching_budget", 10000);
+  double min_inlier_fraction = node_ptr_->declare_parameter<double>("ransac.inlier_fraction", 0.25);
 
 #pragma omp parallel for
   for (int i = 0; i < results.size(); i++) {

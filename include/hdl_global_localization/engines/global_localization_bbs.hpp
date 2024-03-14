@@ -15,7 +15,7 @@ class BBSLocalization;
 
 class GlobalLocalizationBBS : public GlobalLocalizationEngine {
 public:
-  GlobalLocalizationBBS(rclcpp::Node::SharedPtr node_ptr);
+  GlobalLocalizationBBS(rclcpp::Node* node_ptr);
   virtual ~GlobalLocalizationBBS() override;
 
   virtual void set_global_map(pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud) override;
@@ -29,7 +29,7 @@ private:
   pcl::PointCloud<pcl::PointXYZ>::Ptr unslice(const Points2D& points);
 
 protected:
-  rclcpp::Node::SharedPtr node_ptr_;
+  rclcpp::Node* node_ptr_;
 
   rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr gridmap_pub;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr map_slice_pub;

@@ -60,7 +60,7 @@ namespace hdl_global_localization {
 template <typename FeatureT>
 class RansacPoseEstimation {
 public:
-  RansacPoseEstimation(rclcpp::Node::SharedPtr node_ptr);
+  RansacPoseEstimation(rclcpp::Node* node_ptr);
 
   void set_target(pcl::PointCloud<pcl::PointXYZ>::ConstPtr target, typename pcl::PointCloud<FeatureT>::ConstPtr target_features);
   void set_source(pcl::PointCloud<pcl::PointXYZ>::ConstPtr source, typename pcl::PointCloud<FeatureT>::ConstPtr source_features);
@@ -71,7 +71,7 @@ private:
   void select_samples(std::mt19937& mt, const std::vector<std::vector<int>>& similar_features, std::vector<int>& samples, std::vector<int>& correspondences) const;
 
 private:
-  rclcpp::Node::SharedPtr node_ptr_;
+  rclcpp::Node* node_ptr_;
 
   pcl::PointCloud<pcl::PointXYZ>::ConstPtr target;
   typename pcl::PointCloud<FeatureT>::ConstPtr target_features;

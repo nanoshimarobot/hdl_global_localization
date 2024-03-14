@@ -10,7 +10,7 @@ namespace hdl_global_localization {
 
 class GlobalLocalizationEngineFPFH_RANSAC : public GlobalLocalizationEngine {
 public:
-  GlobalLocalizationEngineFPFH_RANSAC(rclcpp::Node::SharedPtr node_ptr);
+  GlobalLocalizationEngineFPFH_RANSAC(rclcpp::Node* node_ptr);
   virtual ~GlobalLocalizationEngineFPFH_RANSAC() override;
 
   virtual void set_global_map(pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud) override;
@@ -21,7 +21,7 @@ protected:
 
 protected:
   // ros::NodeHandle& private_nh;
-  rclcpp::Node::SharedPtr node_ptr_;
+  rclcpp::Node* node_ptr_;
 
   std::unique_ptr<RansacPoseEstimation<pcl::FPFHSignature33>> ransac;
 
