@@ -1,0 +1,82 @@
+/**:
+  ros__parameters:
+    # general config
+    # BBS, FPFH_RANSAC, FPFH_TEASER
+    global_localization_engine: BBS
+
+    # downsampling for global map and query cloud
+    globalmap_downsample_resolution: 0.5
+    query_downsample_resolution: 0.5
+
+    # BBS config
+    bbs:
+      max_range: 15.0
+
+      # transformation search range
+      min_tx: -50.0
+      max_tx: 50.0
+      min_ty: -50.0
+      max_ty: 50.0
+      min_theta: -3.15
+      max_theta: 3.15
+
+      # global map config
+      # slice height range (map coordinate)
+      map_min_z: 2.0
+      map_max_z: 2.4
+      # 2D map params
+      map_width: 512
+      map_height: 1024
+      map_resolution: 0.5
+      max_points_per_cell: 5
+      # precomp map pyramid
+      map_pyramid_level: 6
+
+      # scan slice height range (sensor coordinate)
+      scan_min_z: -0.2
+      scan_max_z: 0.2
+
+    # FPFH config
+    fpfh:
+      normal_estimation_radius: 2.0
+      search_radius: 4.0
+
+    # RANSAC config
+    ransac:
+      # estimation parameters
+      voxel_based: True
+      max_iterations: 1000000
+      matching_budget: 10000
+      max_correspondence_distance: 1.0
+      similarity_threshold: 0.5
+      correspondence_randomness: 2
+      inlier_fraction: 0.25
+
+      # valid transformation range
+      x_min: -10000.0
+      x_max: 10000.0
+      y_min: -10000.0
+      y_max: 10000.0
+      z_min: -10000.0
+      z_max: 10000.0
+
+      roll_min: -3.15
+      roll_max: 3.15
+      pitch_min: -3.15
+      pitch_max: 3.15
+      yaw_min: -3.15
+      yaw_max: 3.15
+
+    # TEASER config
+    teaser:
+      # correspondence estimation params
+      cross_check: False
+      tuple_test: False
+      tuple_scale: 0.95
+
+      # transformation estimation params
+      noise_bound: 0.5
+      cbar2: 1.0
+      rotation_max_iterations: 100
+      rotation_gnc_factor: 1.4
+      rotation_cost_threshold: 0.005

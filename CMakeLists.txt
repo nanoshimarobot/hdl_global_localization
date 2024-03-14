@@ -38,4 +38,10 @@ target_include_directories(${PROJECT_NAME}_component PRIVATE ${PCL_INCLUDE_DIRS}
 target_link_libraries(${PROJECT_NAME}_component ${PCL_LIBRARIES} ${OpenCV_LIBS})
 target_compile_definitions(${PROJECT_NAME}_component PRIVATE ${PCL_DEFINITIONS})
 
+install(DIRECTORY
+  launch
+  config
+  DESTINATION share/${PROJECT_NAME}/
+)
+
 ament_auto_package()
