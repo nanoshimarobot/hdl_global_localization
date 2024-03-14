@@ -14,11 +14,12 @@ def generate_launch_description():
         Node(
             package="hdl_global_localization",
             executable="hdl_global_localization",
+            namespace="hdl_global_localization",
             output="screen",
             parameters=[
-                os.path.join(pkg_dir, "config", "hdl_global_localization.launch.yaml")
+                os.path.join(pkg_dir, "config", "hdl_global_localization.config.yaml")
             ],
         )
     ]
-    
+
     return LaunchDescription(list)
