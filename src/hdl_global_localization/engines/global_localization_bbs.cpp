@@ -26,9 +26,9 @@ GlobalLocalizationBBS::GlobalLocalizationBBS(rclcpp::Node* node_ptr) : node_ptr_
   node_ptr_->declare_parameter<double>("bbs.scan_min_z", -0.2);
   node_ptr_->declare_parameter<double>("bbs.scan_max_z", 0.2);
 
-  gridmap_pub = node_ptr_->create_publisher<nav_msgs::msg::OccupancyGrid>("bbs.gridmap", 1);
-  map_slice_pub = node_ptr_->create_publisher<sensor_msgs::msg::PointCloud2>("bbs.map_slice", 1);
-  scan_slice_pub = node_ptr_->create_publisher<sensor_msgs::msg::PointCloud2>("bbs.scan_slice", 1);
+  gridmap_pub = node_ptr_->create_publisher<nav_msgs::msg::OccupancyGrid>("bbs/gridmap", 1);
+  map_slice_pub = node_ptr_->create_publisher<sensor_msgs::msg::PointCloud2>("bbs/map_slice", 1);
+  scan_slice_pub = node_ptr_->create_publisher<sensor_msgs::msg::PointCloud2>("bbs/scan_slice", 1);
 }
 
 GlobalLocalizationBBS ::~GlobalLocalizationBBS() {}
